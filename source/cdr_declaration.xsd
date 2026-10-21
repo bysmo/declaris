@@ -1,0 +1,301 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+    <!-- Définition des types simples réutilisables -->
+    
+    <xs:simpleType name="TypeDate">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{8}"/> <!-- Format JJMMAAAA -->
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TypeMontant">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TypeTaux">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Structure Principale -->
+    
+    <xs:element name="DeclarationCDR">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Entete" type="TypeEntete"/>
+                <xs:element name="Contenu" type="TypeContenu"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Complex Type : Entete -->
+    <xs:complexType name="TypeEntete">
+        <xs:sequence>
+            <xs:element name="NumDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="4"/>
+                        <xs:pattern value="[0-9]{4}"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="CodPay">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="CodDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:minLength value="5"/>
+                        <xs:maxLength value="7"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="TypDec" fixed="51">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="NatDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                        <xs:enumeration value="00"/> <!-- Reprise -->
+                        <xs:enumeration value="01"/> <!-- Création -->
+                        <xs:enumeration value="02"/> <!-- Mise à jour -->
+                        <xs:enumeration value="03"/> <!-- Corrective -->
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="NbrDec" type="xs:positiveInteger"/>
+            <xs:element name="DatDec" type="TypeDate"/>
+            <xs:element name="DatArr" type="TypeDate"/>
+            <xs:element name="comment" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Complex Type : Contenu (Liste des lignes) -->
+    <xs:complexType name="TypeContenu">
+        <xs:sequence>
+            <xs:element name="Ligne" type="TypeLigneDeclaration" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Complex Type : Ligne de Déclaration -->
+    <xs:complexType name="TypeLigneDeclaration">
+        <xs:sequence>
+            <!-- Bloc Engagement (Optionnel selon contexte métier, mais structurellement présent) -->
+            <xs:element name="Engagement" type="TypeEngagement" minOccurs="0"/>
+            
+            <!-- Bloc Encours -->
+            <xs:element name="Encours" type="TypeEncours" minOccurs="0"/>
+            
+            <!-- Bloc Compte Debiteur -->
+            <xs:element name="CompteDebiteur" type="TypeCompteDebiteur" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Structure Engagement -->
+    <xs:complexType name="TypeEngagement">
+        <xs:sequence>
+            <xs:element name="Consolidation" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="RefInt" type="xs:string" use="required"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="TitulaireEngagement" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="IdInt" type="xs:string" use="required"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GarantieAffectee" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="RefIntGar" type="xs:string" use="required"/>
+                    <xs:attribute name="NatGar" use="required">
+                        <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+                    </xs:attribute>
+                    <xs:attribute name="CodDevGar" use="required">
+                        <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+                    </xs:attribute>
+                    <xs:attribute name="MntGar" type="TypeMontant" use="required"/>
+                    <xs:attribute name="MntAffGar" type="TypeMontant" use="required"/>
+                    <xs:attribute name="RefExtGar" type="xs:string" use="required"/>
+                    <xs:attribute name="TypRefGar" use="required">
+                         <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+                    </xs:attribute>
+                    <xs:attribute name="IdIntGarant" type="xs:string"/>
+                    <xs:attribute name="NomNaiGarant" type="xs:string"/>
+                    <xs:attribute name="StatutGar" use="required">
+                        <xs:simpleType>
+                            <xs:restriction base="xs:string">
+                                <xs:length value="2"/>
+                                <xs:enumeration value="01"/> <!-- Valide -->
+                                <xs:enumeration value="02"/> <!-- Main levée -->
+                                <xs:enumeration value="03"/> <!-- Mis en jeu -->
+                            </xs:restriction>
+                        </xs:simpleType>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <!-- Attributs de Engagement -->
+        <xs:attribute name="RefContCmpt" type="xs:string" use="required"/>
+        <xs:attribute name="CodAge" use="required">
+            <xs:simpleType><xs:restriction base="xs:string"><xs:length value="5"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Statut" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:length value="2"/>
+                    <xs:enumeration value="00"/> <!-- Actif -->
+                    <xs:enumeration value="01"/> <!-- Consolidé -->
+                    <xs:enumeration value="02"/> <!-- Clôturé -->
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="NatConso">
+            <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TypConso">
+            <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Motif">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TypEng" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:length value="2"/>
+                    <xs:enumeration value="01"/> <!-- Avec échéancier -->
+                    <xs:enumeration value="02"/> <!-- Sans échéancier -->
+                    <xs:enumeration value="03"/> <!-- Carte crédit -->
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="NatEng" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="CodDev" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="MntEng" type="TypeMontant" use="required"/>
+        <xs:attribute name="MntCrCedee" type="TypeMontant"/>
+        <xs:attribute name="MntEpargne" type="TypeMontant"/>
+        <xs:attribute name="ModRembEpargne">
+            <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TauxRenum" type="TypeTaux"/>
+        <xs:attribute name="DatMep" type="TypeDate" use="required"/>
+        <xs:attribute name="TxInt" type="TypeTaux"/>
+        <xs:attribute name="TxComm" type="TypeTaux"/>
+        <xs:attribute name="TxBonifie" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TxEffGlob" type="TypeTaux" use="required"/>
+        <xs:attribute name="TypTxInt">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="IndRef">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Sprd" type="TypeTaux"/>
+        <xs:attribute name="DatDeb" type="TypeDate" use="required"/>
+        <xs:attribute name="DatFin" type="TypeDate" use="required"/>
+        <xs:attribute name="Periodicite">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="UnitDur" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Duree" type="xs:integer" use="required"/>
+        <xs:attribute name="Maturite" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatPreEchCap" type="TypeDate"/>
+        <xs:attribute name="NbrEch" type="xs:integer"/>
+        <xs:attribute name="MoyRem">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TypEch">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="MntEch" type="TypeMontant"/>
+        <xs:attribute name="TypAmo">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="TotInt" type="TypeMontant"/>
+        <xs:attribute name="fraDos" type="TypeMontant" use="required"/>
+        <xs:attribute name="fraAnnexe" type="TypeMontant" use="required"/>
+        <xs:attribute name="MntPrm" type="TypeMontant" use="required"/>
+        <xs:attribute name="MntTax" type="TypeMontant"/>
+        <xs:attribute name="DatEve" type="TypeDate" use="required"/>
+    </xs:complexType>
+
+    <!-- Structure Encours -->
+    <xs:complexType name="TypeEncours">
+        <!-- Balise auto-fermante avec attributs uniquement -->
+        <xs:attribute name="RefContCmpt" type="xs:string" use="required"/>
+        <xs:attribute name="DatPai" type="TypeDate"/>
+        <xs:attribute name="DatEch" type="TypeDate"/>
+        <xs:attribute name="MntPay" type="TypeMontant"/>
+        <xs:attribute name="MntAgi" type="TypeMontant"/>
+        <xs:attribute name="MntCrd" type="TypeMontant"/>
+        <xs:attribute name="MntTotUtil" type="TypeMontant" use="required"/>
+        <xs:attribute name="nbrEchPay" type="xs:integer"/>
+        <xs:attribute name="nbrEchImp" type="xs:integer"/>
+        <xs:attribute name="nbrEchRes" type="xs:integer"/>
+        <xs:attribute name="MntCreSouf" type="TypeMontant"/>
+        <xs:attribute name="MntCapSouf" type="TypeMontant"/>
+        <xs:attribute name="MntIntSouf" type="TypeMontant"/>
+        <xs:attribute name="MntTaxSouf" type="TypeMontant"/>
+        <xs:attribute name="MntAgiosSouf" type="TypeMontant"/>
+        <xs:attribute name="MntCreRat" type="TypeMontant"/>
+        <xs:attribute name="MntPro" type="TypeMontant"/>
+        <xs:attribute name="nbrJrsImp" type="xs:integer"/>
+        <xs:attribute name="ClaDeprec" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- Structure Compte Debiteur -->
+    <xs:complexType name="TypeCompteDebiteur">
+        <xs:sequence>
+            <xs:element name="TitulaireCompte" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="IdInt" type="xs:string" use="required"/>
+                    <xs:attribute name="Role" use="required">
+                        <xs:simpleType>
+                            <xs:restriction base="xs:string">
+                                <xs:length value="2"/>
+                                <xs:enumeration value="01"/> <!-- Titulaire -->
+                                <xs:enumeration value="02"/> <!-- Mandataire -->
+                            </xs:restriction>
+                        </xs:simpleType>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="RefContCmpt" type="xs:string" use="required"/>
+        <xs:attribute name="CodAge" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="5"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="SolDeb" type="TypeMontant" use="required"/>
+        <xs:attribute name="NbrJrsDebNonAut" type="xs:integer" use="required"/>
+        <xs:attribute name="MntAgi" type="TypeMontant" use="required"/>
+        <xs:attribute name="MntProv" type="TypeMontant"/>
+        <xs:attribute name="ClassDeprec" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+</xs:schema>

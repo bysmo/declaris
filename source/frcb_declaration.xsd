@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+    <!-- Définition des types simples réutilisables -->
+    
+    <xs:simpleType name="TypeDate">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{8}"/> <!-- Format JJMMAAAA -->
+        </xs:restriction>
+    </xs:simpleType>
+     
+    <xs:simpleType name="TypeMontant">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TypeTaux">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Structure Principale -->
+    
+    <xs:element name="DeclarationFRCB">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Entete" type="TypeEntete"/>
+                <xs:element name="Contenu" type="TypeContenu"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Complex Type : Entete -->
+    <xs:complexType name="TypeEntete">
+        <xs:sequence>
+            <xs:element name="NumDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="4"/>
+                        <xs:pattern value="[0-9]{4}"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="CodPay">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="CodDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:minLength value="5"/>
+                        <xs:maxLength value="7"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="TypDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                        <xs:enumeration value="01"/> <!-- Personne Physique -->
+                        <xs:enumeration value="02"/> <!-- Personne Morale -->
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="NatDec">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:length value="2"/>
+                        <xs:enumeration value="00"/> <!-- Reprise -->
+                        <xs:enumeration value="01"/> <!-- Création -->
+                        <xs:enumeration value="02"/> <!-- Mise à jour -->
+                        <xs:enumeration value="03"/> <!-- Corrective -->
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="NbrDec" type="xs:positiveInteger"/>
+            <xs:element name="DatDec" type="TypeDate"/>
+            <xs:element name="Comment" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Complex Type : Contenu (Choix entre PP et PM) -->
+    <xs:complexType name="TypeContenu">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="EntetePersonnePhysique" type="TypeEntetePersonnePhysique" maxOccurs="unbounded"/>
+                <xs:element name="EntetePersonneMorale" type="TypeEntetePersonneMorale" maxOccurs="unbounded"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ========================================== -->
+    <!-- DECLARATION PERSONNE PHYSIQUE -->
+    <!-- ========================================== -->
+    
+    <xs:complexType name="TypeEntetePersonnePhysique">
+        <xs:sequence>
+            <xs:element name="PersonnePhysique" type="TypePersonnePhysique"/>
+        </xs:sequence>
+        <xs:attribute name="IdIntCli" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="TypePersonnePhysique">
+        <xs:sequence>
+            <!-- Balises filles répétitives ou facultatives -->
+            <xs:element name="PieceIdentite" type="TypePieceIdentite" maxOccurs="unbounded"/>
+            <xs:element name="Adresses" type="TypeAdresse" maxOccurs="unbounded"/>
+            <xs:element name="Mandataire" type="TypeMandatairePP" minOccurs="0"/> <!-- Non répétitive selon doc 4.2.2.1 -->
+            <xs:element name="Employeur" type="TypeEmployeur" minOccurs="0"/>
+            <xs:element name="AutresRelations" type="TypeAutreRelation" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="InformationsAdditionnelles" type="TypeInfosAdditionnelles" minOccurs="0"/>
+        </xs:sequence>
+        
+        <!-- Attributs directs de PersonnePhysique -->
+        <xs:attribute name="NIF_NIU" type="xs:string"/>
+        <xs:attribute name="Sexe" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:length value="1"/>
+                    <xs:enumeration value="M"/>
+                    <xs:enumeration value="F"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Nom" type="xs:string"/>
+        <xs:attribute name="NomMar" type="xs:string"/>
+        <xs:attribute name="Prenom" type="xs:string"/>
+        <xs:attribute name="NomComplet" type="xs:string"/>
+        <xs:attribute name="PreNai" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatNai" type="TypeDate" use="required"/>
+        <xs:attribute name="VilleNai" type="xs:string" use="required"/>
+        <xs:attribute name="PaysNai" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Statut" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:length value="2"/>
+                    <xs:enumeration value="00"/> <!-- Actif -->
+                    <xs:enumeration value="01"/> <!-- Décédé -->
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Resident" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:length value="2"/>
+                    <xs:enumeration value="01"/>
+                    <xs:enumeration value="02"/>
+                    <xs:enumeration value="03"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="PaysRes" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="NatCli" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="NomPere" type="xs:string"/>
+        <xs:attribute name="PrePere" type="xs:string"/>
+        <xs:attribute name="NomMere" type="xs:string"/>
+        <xs:attribute name="PreMere" type="xs:string"/>
+        <xs:attribute name="SitMat" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="AgeEco" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="4"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="RCCM" type="xs:string"/>
+        <xs:attribute name="SectAct" type="xs:string"/>
+        <xs:attribute name="CA" type="TypeMontant"/>
+        <xs:attribute name="NombEmp" type="xs:integer"/>
+        <xs:attribute name="SitJud" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatDebInt" type="TypeDate"/>
+        <xs:attribute name="DatFinInt" type="TypeDate"/>
+        <xs:attribute name="DatEntRelPar" type="TypeDate" use="required"/>
+        <xs:attribute name="Email" type="xs:string"/>
+        <xs:attribute name="Mobile" type="xs:string" use="required"/>
+        <xs:attribute name="DatEve" type="TypeDate" use="required"/>
+    </xs:complexType>
+
+    <!-- Types enfants PP -->
+    <xs:complexType name="TypePieceIdentite">
+        <xs:attribute name="TypPiece" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="NumPiece" type="xs:string" use="required"/>
+        <xs:attribute name="DatEmPiece" type="TypeDate" use="required"/>
+        <xs:attribute name="Lieu" type="xs:string"/>
+        <xs:attribute name="Pays" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatFinPiece" type="TypeDate" use="required"/>
+    </xs:complexType>
+    
+    <!-- Type Adresse commun (utilise nom de balise 'Adresses' selon doc) -->
+    <xs:complexType name="TypeAdresse">
+        <xs:attribute name="TypAdr" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Adresse" type="xs:string" use="required"/>
+        <xs:attribute name="Pays" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Region">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Ville" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="CodPost" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="TypeMandatairePP">
+        <xs:attribute name="IdIntMand" type="xs:string"/>
+        <xs:attribute name="QualiteMand">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="TypeEmployeur">
+        <xs:attribute name="RaiSocEmp" type="xs:string"/>
+        <xs:attribute name="RccmEmp" type="xs:string"/>
+        <xs:attribute name="SectActEmp">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="5"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="StaEmp">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatEntEmp" type="TypeDate"/>
+        <xs:attribute name="FonEmp">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="5"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="TypeAutreRelation">
+        <xs:attribute name="IdIntRel" type="xs:string"/>
+        <xs:attribute name="NomRel" type="xs:string"/>
+        <xs:attribute name="PrenomRel" type="xs:string"/>
+        <xs:attribute name="TypRel">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="TypeInfosAdditionnelles">
+        <xs:attribute name="NbrPerCh" type="xs:integer"/>
+        <xs:attribute name="TypLog">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="RevMenNet" type="TypeMontant"/>
+        <xs:attribute name="CodDev">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ========================================== -->
+    <!-- DECLARATION PERSONNE MORALE -->
+    <!-- ========================================== -->
+
+    <xs:complexType name="TypeEntetePersonneMorale">
+        <xs:sequence>
+            <xs:element name="PersonneMorale" type="TypePersonneMorale"/>
+        </xs:sequence>
+        <xs:attribute name="IdIntCli" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="TypePersonneMorale">
+        <xs:sequence>
+            <!-- Balises filles -->
+            <xs:element name="Adresses" type="TypeAdresse" maxOccurs="unbounded"/>
+            <xs:element name="Mandataire" type="TypeMandatairePM" minOccurs="0" maxOccurs="unbounded"/> <!-- Répétitive selon doc 4.2.3.1 -->
+            <xs:element name="Actionnaires" type="TypeActionnaire" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="AutresRelations" type="TypeAutreRelation" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <!-- Attributs -->
+        <xs:attribute name="NIF_NIU" type="xs:string" use="required"/>
+        <xs:attribute name="RaiSoc" type="xs:string" use="required"/>
+        <xs:attribute name="DatCre" type="TypeDate" use="required"/>
+        <xs:attribute name="Sigle" type="xs:string"/>
+        <xs:attribute name="Resident" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="PaysSiege" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="Ville" type="xs:string" use="required"/>
+        <xs:attribute name="RCCM" type="xs:string" use="required"/>
+        <xs:attribute name="ForJurid" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="SecAct" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="5"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="AgeEco" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="4"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="StaLeg">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatEntRelPar" type="TypeDate" use="required"/>
+        <xs:attribute name="ChiAffaire" type="TypeMontant"/>
+        <xs:attribute name="TotBilan" type="TypeMontant"/>
+        <xs:attribute name="Effectif" type="xs:integer"/>
+        <xs:attribute name="Email" type="xs:string"/>
+        <xs:attribute name="Tel" type="xs:string" use="required"/>
+        <xs:attribute name="SitJud" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="1"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatDebInt" type="TypeDate"/>
+        <xs:attribute name="DatFinInt" type="TypeDate"/>
+        <xs:attribute name="DatEve" type="TypeDate" use="required"/>
+    </xs:complexType>
+
+    <!-- Types enfants PM -->
+    <xs:complexType name="TypeMandatairePM">
+        <xs:attribute name="IdIntMand" type="xs:string"/>
+        <xs:attribute name="TypMand" use="required">
+             <xs:simpleType><xs:restriction base="xs:string"><xs:length value="2"/></xs:restriction></xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="DatDebMand" type="TypeDate"/>
+        <xs:attribute name="DatFinMand" type="TypeDate"/>
+    </xs:complexType>
+
+    <xs:complexType name="TypeActionnaire">
+        <xs:attribute name="IdIntAct" type="xs:string"/>
+        <xs:attribute name="NomAct" type="xs:string"/>
+        <xs:attribute name="PctAct" type="TypeTaux"/>
+        <xs:attribute name="DatDebAct" type="TypeDate"/>
+        <xs:attribute name="DatFinAct" type="TypeDate"/>
+        <xs:attribute name="DatMajAct" type="TypeDate"/>
+        <xs:attribute name="TelAct" type="xs:string"/>
+    </xs:complexType>
+
+</xs:schema>
